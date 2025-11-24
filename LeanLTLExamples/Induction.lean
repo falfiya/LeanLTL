@@ -5,6 +5,12 @@ namespace LeanLTL.Examples
 open LeanLTL
 open scoped LeanLTL.Notation
 
+example {σ : Type} (n : σ → ℕ) : ⊨ⁱ LLTL[𝐆 ((← n) > 5) → 𝐆 ((← n) > 4)] := by
+  simp +contextual [push_ltl]
+  intros t ht q n'
+  specialize q n'
+  omega
+
 example {σ : Type} (n : σ → ℕ) :
     ⊨ⁱ LLTL[𝐆 ((←ˢ n) < (←ˢ 𝐗 n)) → ∀ m, 𝐅 (m < (←ˢ n))] := by
   simp +contextual [push_ltl]
