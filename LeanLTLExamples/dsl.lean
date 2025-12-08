@@ -116,12 +116,11 @@ def StubbornLink {𝓂 : Type} : @TS 𝓂 where
     -- And a process crashes on both at the same time
     ∧ (∀ n p, crashedAt t n p ↔ FairLossLink.crashedAt fll_t n p)
     -- Here are the requests made to it.
-    ∧ (∀ n p₁ p₂ msg,
-        ∃ n' ≤ n, ((.Send p₂ msg) ∈ requestsAt t n p₁)
-        → ((.Send p₂ msg) ∈ FairLossLink.requestsAt fll_t n p₁))
+    ∧ (∀ n p₁ p₂ msg, ((.Send p₂ msg) ∈ requestsAt t n p₁)
+        → ∀ sendTime, n ≤ sendTime
+        → ((.Send p₂ msg) ∈ FairLossLink.requestsAt fll_t sendTime p₁))
     -- Now that we have our fair loss link, and it's up and running, we need to filter our stubborn
     -- link indications.
-    --
     -- The stubborn link delivers whenever the fair loss link delivers.
     ∧ (∀ n p₁ p₂ msg,
         (.Deliver p₁ msg) ∈ FairLossLink.indicationsAt fll_t n p₂
@@ -140,7 +139,15 @@ namespace StubbornLink
       simp at fairloss
       specialize fairloss p₁ p₂ msg
       have infiniteSend : ∀ (n : ℕ), ∃ sendTime, n ≤ sendTime ∧ FairLossLink.Request.Send p₂ msg ∈ FairLossLink.requestsAt fll_t sendTime p₁ := by
-        sorry
+        intro now
+        -- exists (now + y + x)
+        -- Prove that the FairLossLink was sent to after now.
+        specialize subreq (y + x) p₁ p₂ msg
+        unfold requests at req
+        unfold requestsAt at subreq
+        specialize subreq req (now + y + x) (by omega)
+        exists (now + y + x)
+        exact ⟨by omega, subreq⟩
       specialize fairloss infiniteSend (z + x)
       obtain ⟨deliverTime, ⟨deliverTimeLowerBound, crashedOrDelivered⟩⟩ := fairloss
       exists (deliverTime - (z + x))
