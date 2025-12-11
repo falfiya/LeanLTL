@@ -13,19 +13,14 @@ instance {α : Type} : Membership α (Option $ Set α) where
   | .some s, a => a ∈ s
   | _, _ => False
 
-theorem mem_imp_some_set {α : Type} x (S : Option $ Set α) (h : x ∈ S) : S.isSome := by
-  match S with
-  | .none => contradiction
-  | .some s => trivial
-
-axiom MaxDeliverTime : ℕ
-
 namespace FairLossLink
+  axiom MaxDeliverTime : ℕ
+
   variable {𝓂 : Type}
 
   inductive Request | Send (dest : Process) (msg : 𝓂)
   -- In distributed system terminology, "deliver" sorta means "receives".
-  -- That's because we are reasoning about the fair-loss link component,
+  -- That's because we are reasoning about the fair-loss link component
   -- who will be delivering messages to the process on which it is hosted.
   inductive Indication | Deliver (src : Process) (msg : 𝓂)
 
@@ -121,8 +116,7 @@ def StubbornLink {𝓂 : Type} : @TraceSet' 𝓂 where
     -- Here are the only requests made to it.
     ∧ (∀ n p₁ p₂ msg,
       (.Send p₂ msg) ∈ (FairLossLink.requestsAt fll_t n p₁)
-        ↔ ∃ sendTime ≤ n, (.Send p₂ msg) ∈ requestsAt t sendTime p₁
-    )
+        ↔ ∃ sendTime ≤ n, (.Send p₂ msg) ∈ requestsAt t sendTime p₁)
     -- ∧ (∀ sendTime p₁ p₂ msg, ((.Send p₂ msg) ∈ requestsAt t sendTime p₁)
     --     ↔ ∀ forwardTime, sendTime ≤ forwardTime
     --     → ((.Send p₂ msg) ∈ FairLossLink.requestsAt fll_t forwardTime p₁))
@@ -135,7 +129,7 @@ def StubbornLink {𝓂 : Type} : @TraceSet' 𝓂 where
 
 namespace StubbornLink
   variable {𝓂 : Type}
-  -- Send from p1 to p2 means p2 delivers infinitely often once you've sent it.
+  -- If p1 sends to p2, then p2 will deliver infinitely often, or it will have crashed.
   theorem stubbornDelivery (p₁ p₂ : Process) (msg : 𝓂) :
     ⊨ⁱ LLTL[StubbornLink →
       𝐆 (((.Send p₂ msg) ∈ ((← requests) p₁))
@@ -201,7 +195,7 @@ namespace StubbornLink
       -- 3.
       replace noCreation := noCreation p₁ p₂ msg deliverTime fllDelivery
       obtain ⟨n', n'min, n'max, fairlossSend⟩ := noCreation
-      -- TODO: prove no fair loss send
+      -- 4.
       obtain ⟨m, mMin, stubbornSend⟩ := (sendCode n' p₁ p₂ msg).mp fairlossSend
       specialize noStubbornSend m (by omega)
       contradiction
